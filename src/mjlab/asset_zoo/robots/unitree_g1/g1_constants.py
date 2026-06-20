@@ -196,16 +196,16 @@ HOME_KEYFRAME = EntityCfg.InitialStateCfg(
 )
 
 KNEES_BENT_KEYFRAME = EntityCfg.InitialStateCfg(
-  pos=(0, 0, 0.76),
+  pos=(0, 0, 0.80),
   joint_pos={
-    ".*_hip_pitch_joint": -0.312,
-    ".*_knee_joint": 0.669,
-    ".*_ankle_pitch_joint": -0.363,
-    ".*_elbow_joint": 0.6,
-    "left_shoulder_roll_joint": 0.2,
-    "left_shoulder_pitch_joint": 0.2,
-    "right_shoulder_roll_joint": -0.2,
-    "right_shoulder_pitch_joint": 0.2,
+    ".*_hip_pitch_joint": 0.0,
+    ".*_knee_joint": 0.0,
+    ".*_ankle_pitch_joint": 0.0,
+    ".*_elbow_joint": 1.47,
+    "left_shoulder_roll_joint": 0.178,
+    "left_shoulder_pitch_joint": 0.0,
+    "right_shoulder_roll_joint": -0.178,
+    "right_shoulder_pitch_joint": 0.0,
   },
   joint_vel={".*": 0.0},
 )
