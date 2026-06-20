@@ -26,16 +26,17 @@ from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 def _feet_air_time_linear(
   env, sensor_name: str, target: float = 0.6,
 ) -> torch.Tensor:
-  """Proportional air-time reward: min(air_time / target, 1.0) per foot.
+  """Airtime reward using only the SHORTER airtime of the two feet.
 
-  Gives partial credit even for very short airtime, so the gradient
-  always points toward longer steps.
+  reward = min(air_left, air_right) / target, clamped to [0, 1].
+  This naturally encourages symmetric gait — both feet must have
+  long airtime for high reward.
   """
   sensor: ContactSensor = env.scene[sensor_name]
   air_time = sensor.data.current_air_time
   assert air_time is not None
-  reward = torch.clamp(air_time / target, max=1.0)
-  return torch.sum(reward, dim=1)
+  min_air = torch.min(air_time, dim=1).values  # [B]
+  return torch.clamp(min_air / target, max=1.0)
 
 
 def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
@@ -167,20 +168,6 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     func=_feet_air_time_linear,
     weight=2.0,
     params={"sensor_name": "feet_ground_contact", "target": 0.6},
-  )
-
-  # Penalize left-right airtime asymmetry to encourage symmetric gait.
-  def _gait_symmetry(env, sensor_name: str) -> torch.Tensor:
-    sensor: ContactSensor = env.scene[sensor_name]
-    air = sensor.data.current_air_time
-    assert air is not None and air.shape[1] >= 2
-    return -torch.abs(air[:, 0] - air[:, 1])
-
-
-  cfg.rewards["gait_symmetry"] = RewardTermCfg(
-    func=_gait_symmetry,
-    weight=4.0,
-    params={"sensor_name": "feet_ground_contact"},
   )
 
   # Increase velocity tracking reward to make the robot actually walk.
