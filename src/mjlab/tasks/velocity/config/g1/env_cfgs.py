@@ -215,7 +215,7 @@ def unitree_g1_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.curriculum.pop("command_vel", None)
   twist_cmd = cfg.commands["twist"]
   assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-  twist_cmd.ranges.lin_vel_x = (0.3, 0.3)
+  twist_cmd.ranges.lin_vel_x = (0.0, 0.3)
   twist_cmd.ranges.lin_vel_y = (0.0, 0.0)
   twist_cmd.ranges.ang_vel_z = (0.0, 0.0)
   twist_cmd.rel_standing_envs = 0.0
@@ -225,7 +225,7 @@ def unitree_g1_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   if play:
     twist_cmd = cfg.commands["twist"]
     assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-    twist_cmd.ranges.lin_vel_x = (0.3, 0.3)
+    twist_cmd.ranges.lin_vel_x = (0.0, 0.3)
     twist_cmd.ranges.lin_vel_y = (0.0, 0.0)
     twist_cmd.ranges.ang_vel_z = (0.0, 0.0)
     twist_cmd.rel_standing_envs = 0.0
