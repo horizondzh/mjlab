@@ -26,16 +26,12 @@ from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 def _feet_air_time_linear(
   env, sensor_name: str, target: float = 0.6,
 ) -> torch.Tensor:
-  """Airtime reward = min(airL, airR) / target.
-
-  Takes the SHORTER airtime so single-foot standing gives 0.
-  Robot MUST alternate steps to get any reward.
-  """
+  """Proportional air-time reward per foot: min(t / target, 1.0)."""
   sensor: ContactSensor = env.scene[sensor_name]
   air_time = sensor.data.current_air_time
   assert air_time is not None
-  min_air = torch.min(air_time, dim=1).values
-  return torch.clamp(min_air / target, max=1.0)
+  reward = torch.clamp(air_time / target, max=1.0)
+  return torch.sum(reward, dim=1)
 
 
 def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
@@ -169,7 +165,18 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     params={"sensor_name": "feet_ground_contact", "target": 0.6},
   )
 
-  # Increase velocity tracking reward to make the robot actually walk.
+  # Prevent single-foot standing: penalize left-right asymmetry.
+  def _gait_symmetry(env, sensor_name: str) -> torch.Tensor:
+    sensor: ContactSensor = env.scene[sensor_name]
+    air = sensor.data.current_air_time
+    assert air is not None and air.shape[1] >= 2
+    return -torch.abs(air[:, 0] - air[:, 1])
+
+  cfg.rewards["gait_symmetry"] = RewardTermCfg(
+    func=_gait_symmetry,
+    weight=3.0,
+    params={"sensor_name": "feet_ground_contact"},
+  )
   cfg.rewards["track_linear_velocity"].weight = 3.0
   cfg.rewards["track_angular_velocity"].weight = 3.0
 
