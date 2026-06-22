@@ -169,6 +169,19 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     params={"sensor_name": "feet_ground_contact", "target": 0.6},
   )
 
+  # Penalize left-right airtime asymmetry to encourage symmetric gait.
+  def _gait_symmetry(env, sensor_name: str) -> torch.Tensor:
+    sensor: ContactSensor = env.scene[sensor_name]
+    air = sensor.data.current_air_time
+    assert air is not None and air.shape[1] >= 2
+    return -torch.abs(air[:, 0] - air[:, 1])
+
+  cfg.rewards["gait_symmetry"] = RewardTermCfg(
+    func=_gait_symmetry,
+    weight=2.0,
+    params={"sensor_name": "feet_ground_contact"},
+  )
+
   # Increase velocity tracking reward to make the robot actually walk.
   cfg.rewards["track_linear_velocity"].weight = 3.0
   cfg.rewards["track_angular_velocity"].weight = 3.0
