@@ -1,60 +1,64 @@
-# Development Workflow
+# mjlab — G1 Velocity Training
 
-**Always use `uv run`, not python**.
+Fork of `google-deepmind/mjlab` focused on Unitree G1 flat-terrain velocity training.
+Based on MuJoCo + Warp + RSL-RL.
 
-```sh
+## Project
 
-# 1. Make changes.
+- Python 3.12+, managed with `uv`. Always use `uv run` prefix.
+- Entry: `src/mjlab/scripts/train.py` (training), `src/mjlab/scripts/play.py` (inference).
+- Remote: `git@github.com:horizondzh/mjlabdzh.git`
+- Task ID: `Mjlab-Velocity-Flat-Unitree-G1`
 
-# 2. Type check.
-uv run ty check  # Fast
-uv run pyright  # More thorough, but slower
-
-# 3. Run tests.
-uv run pytest tests/  # Single suite
-uv run pytest tests/<test_file>.py  # Specific file
-
-# 4. Format and lint before committing.
-uv run ruff format
-uv run ruff check --fix
-```
-
-We've bundled common commands into a Makefile for convenience.
+## Commands
 
 ```sh
-make format     # Format and lint
-make type       # Type-check
-make check      # make format && make type
-make test-fast  # Run tests excluding slow ones
-make test       # Run the full test suite
-make docs       # Build documentation
+# Quick scripts
+./train.sh        # Start/resume training (resume=True in config)
+./play.sh         # Play latest model on CPU (1 env)
+./tensorboard.sh  # View training curves (port 6006)
+
+# Dev checks
+uv run ruff format && uv run ruff check --fix  # Format & lint
+make type                                       # Type-check
+make check                                      # Full check (format + lint + type)
+
+# Tests
+uv run pytest tests/ -x -q   # Run all
+uv run pytest tests/test_velocity_task.py  # Specific
 ```
 
-Always run `make check` before committing. This runs formatting, linting,
-and type checking. Do not commit code that fails type checking.
+## Architecture
 
-Before creating a PR, ensure all checks pass with `make test`.
+```
+src/mjlab/
+├── asset_zoo/robots/unitree_g1/   # G1 XML + constants
+├── envs/                           # ManagerBasedRlEnv, MDP primitives
+├── tasks/velocity/
+│   ├── config/g1/
+│   │   ├── env_cfgs.py            # ⭐ Main config: rewards, physics, commands
+│   │   └── rl_cfg.py              # PPO config, network sizes, resume
+│   ├── mdp/                        # Reward/observation/termination functions
+│   ├── rl/runner.py                # VelocityOnPolicyRunner
+│   └── velocity_env_cfg.py         # Base velocity task (shared)
+├── rl/                             # RSL-RL wrappers, vecenv, config base
+└── scripts/
+    ├── train.py                    # Training entry point
+    └── play.py                     # Inference entry point
+logs/rsl_rl/g1_velocity_xpeng_walk/ # Training runs (TensorBoard)
+```
 
-When making user-facing changes, add an entry to `docs/source/changelog.rst`
-under the "Upcoming version (not yet released)" section using
-Added/Changed/Fixed categories. Reference issues with `:issue:\`123\``
-(renders as a link to the GitHub issue).
+Key config locations for G1 reward tuning:
+- `src/mjlab/tasks/velocity/config/g1/env_cfgs.py` — `_g1_base_env_cfg` and `unitree_g1_flat_env_cfg`
+- `src/mjlab/tasks/velocity/config/g1/rl_cfg.py` — `unitree_g1_ppo_runner_cfg`
 
-# Commits and PRs
+## Conventions
 
-- Put `Fixes #<number>` at the end of the commit message body, not in
-  the title.
-- PR body should be plain, concise prose. No section headers, checklists,
-  or structured templates. Describe the problem, what the change does, and
-  any non-obvious tradeoffs. A good PR description reads like a short
-  paragraph to a colleague, not a form.
-- PR and commit messages are rendered on GitHub, so don't hard-wrap them
-  at 88 columns. Let each sentence flow on one line.
+- Line length: 88 cols (code + comments + docstrings).
+- Use functions/fixtures for tests, not test classes.
+- Import order: stdlib → third-party → mjlab internal.
+- Config overrides go in G1-specific files, not shared `velocity_env_cfg.py`.
+- Always `uv run`, never bare `python` or `pip`.
 
-Some style guidelines to follow:
-- Line length limit is 88 columns. This applies to code, comments, and docstrings.
-- Avoid local imports unless they are strictly necessary (e.g. circular imports).
-- Tests should follow these principles:
-  - Use functions and fixtures; do not use test classes.
-  - Favor targeted, efficient tests over exhaustive edge-case coverage.
-  - Prefer running individual tests rather than the full test suite to improve iteration speed.
+## Notes
+
