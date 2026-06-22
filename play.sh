@@ -14,7 +14,7 @@ done
 
 cd "$(dirname "$0")"
 export PATH="$HOME/.local/bin:$PATH"
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+export CUDA_VISIBLE_DEVICES=""
 
 # Find latest checkpoint
 LOG_DIR="logs/rsl_rl/g1_velocity_xpeng_walk"
@@ -37,4 +37,5 @@ uv run python src/mjlab/scripts/play.py \
     "$TASK" \
     --checkpoint-file "$LATEST_MODEL" \
     --num-envs 1 \
+    --device cpu \
     "${ARGS[@]}"
