@@ -166,6 +166,7 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.rewards["air_time"] = RewardTermCfg(
     func=_feet_air_time_linear,
     weight=6.0,
+    params={"sensor_name": "feet_ground_contact", "target": 0.6},
   )
 
   # Increase velocity tracking reward to make the robot actually walk.
