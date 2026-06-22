@@ -174,7 +174,7 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
   cfg.rewards["gait_symmetry"] = RewardTermCfg(
     func=_gait_symmetry,
-    weight=3.0,
+    weight=2.0,
     params={"sensor_name": "feet_ground_contact"},
   )
   cfg.rewards["track_linear_velocity"].weight = 3.0
