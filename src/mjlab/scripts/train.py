@@ -103,9 +103,13 @@ def run_train(task_id: str, cfg: TrainConfig, log_dir: Path) -> None:
         )
     else:
       # Load checkpoint from local filesystem.
-      resume_path = get_checkpoint_path(
-        log_root_path, cfg.agent.load_run, cfg.agent.load_checkpoint
-      )
+      try:
+        resume_path = get_checkpoint_path(
+          log_root_path, cfg.agent.load_run, cfg.agent.load_checkpoint
+        )
+      except ValueError as e:
+        if rank == 0:
+          print(f"[INFO]: No checkpoint found ({e}), starting fresh.")
 
   # Only record videos on rank 0 to avoid multiple workers writing to the same files.
   if cfg.video and rank == 0:
