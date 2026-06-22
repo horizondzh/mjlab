@@ -109,7 +109,7 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.events["foot_friction"].params["asset_cfg"].geom_names = geom_names
   cfg.events["base_com"].params["asset_cfg"].body_names = ("torso_link",)
 
-  cfg.rewards["pose"].params["std_standing"] = {".*": 0.02}
+  cfg.rewards["pose"].params["std_standing"] = {".*": 0.05}
   cfg.rewards["pose"].params["std_walking"] = {
     r".*hip_pitch.*": 0.3,
     r".*hip_roll.*": 0.15,
@@ -117,15 +117,14 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     r".*knee.*": 0.35,
     r".*ankle_pitch.*": 0.25,
     r".*ankle_roll.*": 0.1,
-    # Lock upper body — only shoulder_pitch allowed to move.
-    r".*waist_yaw.*": 0.02,
-    r".*waist_roll.*": 0.02,
-    r".*waist_pitch.*": 0.02,
+    r".*waist_yaw.*": 0.2,
+    r".*waist_roll.*": 0.08,
+    r".*waist_pitch.*": 0.1,
     r".*shoulder_pitch.*": 0.15,
-    r".*shoulder_roll.*": 0.02,
-    r".*shoulder_yaw.*": 0.02,
-    r".*elbow.*": 0.02,
-    r".*wrist.*": 0.02,
+    r".*shoulder_roll.*": 0.15,
+    r".*shoulder_yaw.*": 0.1,
+    r".*elbow.*": 0.15,
+    r".*wrist.*": 0.3,
   }
   cfg.rewards["pose"].params["std_running"] = {
     r".*hip_pitch.*": 0.5,
@@ -134,14 +133,14 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     r".*knee.*": 0.6,
     r".*ankle_pitch.*": 0.35,
     r".*ankle_roll.*": 0.15,
-    r".*waist_yaw.*": 0.02,
-    r".*waist_roll.*": 0.02,
-    r".*waist_pitch.*": 0.02,
+    r".*waist_yaw.*": 0.3,
+    r".*waist_roll.*": 0.08,
+    r".*waist_pitch.*": 0.2,
     r".*shoulder_pitch.*": 0.5,
-    r".*shoulder_roll.*": 0.02,
-    r".*shoulder_yaw.*": 0.02,
-    r".*elbow.*": 0.02,
-    r".*wrist.*": 0.02,
+    r".*shoulder_roll.*": 0.2,
+    r".*shoulder_yaw.*": 0.15,
+    r".*elbow.*": 0.35,
+    r".*wrist.*": 0.3,
   }
 
   cfg.rewards["upright"].params["asset_cfg"].body_names = ("torso_link",)
@@ -207,7 +206,7 @@ def unitree_g1_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.terminations.pop("out_of_terrain_bounds", None)
 
   # Set default number of parallel environments.
-  cfg.scene.num_envs = 2048
+  cfg.scene.num_envs = 1024
 
   # Disable terrain curriculum (flat ground has no terrain levels).
   cfg.curriculum.pop("terrain_levels", None)
