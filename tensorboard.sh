@@ -16,4 +16,4 @@ echo "   Logdir: $(pwd)/logs/rsl_rl"
 echo "   Press Ctrl+C to stop."
 echo ""
 
-uv run tensorboard --logdir "$(pwd)/logs/rsl_rl" --port "$PORT"
+uv run tensorboard --logdir "$(pwd)/logs/rsl_rl" --port "$PORT" --reload_interval 5
