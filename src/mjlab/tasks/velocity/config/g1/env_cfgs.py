@@ -26,17 +26,16 @@ from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 def _feet_air_time_linear(
   env, sensor_name: str, target: float = 0.6,
 ) -> torch.Tensor:
-  """Airtime reward using only the SHORTER airtime of the two feet.
+  """Proportional air-time reward: min(air_time / target, 1.0) per foot.
 
-  reward = min(air_left, air_right) / target, clamped to [0, 1].
-  This naturally encourages symmetric gait — both feet must have
-  long airtime for high reward.
+  Gives partial credit even for very short airtime, so the gradient
+  always points toward longer steps.
   """
   sensor: ContactSensor = env.scene[sensor_name]
   air_time = sensor.data.current_air_time
   assert air_time is not None
-  min_air = torch.min(air_time, dim=1).values  # [B]
-  return torch.clamp(min_air / target, max=1.0)
+  reward = torch.clamp(air_time / target, max=1.0)
+  return torch.sum(reward, dim=1)
 
 
 def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
