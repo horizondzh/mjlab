@@ -24,13 +24,18 @@ from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
 
 
 def _feet_air_time_linear(
-  env, sensor_name: str, target: float = 0.6,
+  env, sensor_name: str, target: float = 0.6, width: float = 0.3,
 ) -> torch.Tensor:
-  """Proportional air-time reward per foot: min(t / target, 1.0)."""
+  """Bell-shaped air-time reward peaking at `target` seconds.
+
+  reward = max(1 - |t - target| / width, 0) per foot, then sum.
+  At width=0.3: 0.3s→0, 0.6s→1, ≥0.9s→0.
+  Naturally caps swing time and enforces ~0.6 Hz cadence.
+  """
   sensor: ContactSensor = env.scene[sensor_name]
   air_time = sensor.data.current_air_time
   assert air_time is not None
-  reward = torch.clamp(air_time / target, max=1.0)
+  reward = (1.0 - torch.abs(air_time - target) / width).clamp(min=0.0)
   return torch.sum(reward, dim=1)
 
 
@@ -162,7 +167,7 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.rewards["air_time"] = RewardTermCfg(
     func=_feet_air_time_linear,
     weight=6.0,
-    params={"sensor_name": "feet_ground_contact", "target": 0.6},
+    params={"sensor_name": "feet_ground_contact", "target": 0.6, "width": 0.3},
   )
 
   # Prevent single-foot standing: penalize left-right asymmetry.
@@ -174,7 +179,7 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
   cfg.rewards["gait_symmetry"] = RewardTermCfg(
     func=_gait_symmetry,
-    weight=2.0,
+    weight=4.0,
     params={"sensor_name": "feet_ground_contact"},
   )
   cfg.rewards["track_linear_velocity"].weight = 3.0

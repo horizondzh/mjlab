@@ -38,4 +38,5 @@ uv run python src/mjlab/scripts/play.py \
     --checkpoint-file "$LATEST_MODEL" \
     --num-envs 1 \
     --device cpu \
+    --no-terminations True \
     "${ARGS[@]}"
