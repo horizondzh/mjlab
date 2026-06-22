@@ -206,7 +206,7 @@ def unitree_g1_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.terminations.pop("out_of_terrain_bounds", None)
 
   # Set default number of parallel environments.
-  cfg.scene.num_envs = 1024
+  cfg.scene.num_envs = 2048
 
   # Disable terrain curriculum (flat ground has no terrain levels).
   cfg.curriculum.pop("terrain_levels", None)
