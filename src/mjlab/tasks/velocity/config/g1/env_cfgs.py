@@ -155,6 +155,8 @@ def _g1_base_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.rewards["foot_swing_height"].weight = 0.0
   # Disable foot_clearance — conflicts with air_time reward.
   cfg.rewards["foot_clearance"].weight = 0.0
+  # Light penalty for hard foot impacts.
+  cfg.rewards["soft_landing"].weight = -0.1
 
   cfg.rewards["body_ang_vel"].weight = -0.15
   cfg.rewards["angular_momentum"].weight = -0.05
@@ -226,7 +228,7 @@ def unitree_g1_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.curriculum.pop("command_vel", None)
   twist_cmd = cfg.commands["twist"]
   assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-  twist_cmd.ranges.lin_vel_x = (0.0, 0.3)
+  twist_cmd.ranges.lin_vel_x = (0.0, 0.5)
   twist_cmd.ranges.lin_vel_y = (0.0, 0.0)
   twist_cmd.ranges.ang_vel_z = (0.0, 0.0)
   twist_cmd.rel_standing_envs = 0.0
@@ -236,7 +238,7 @@ def unitree_g1_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   if play:
     twist_cmd = cfg.commands["twist"]
     assert isinstance(twist_cmd, UniformVelocityCommandCfg)
-    twist_cmd.ranges.lin_vel_x = (0.0, 0.3)
+    twist_cmd.ranges.lin_vel_x = (0.0, 0.5)
     twist_cmd.ranges.lin_vel_y = (0.0, 0.0)
     twist_cmd.ranges.ang_vel_z = (0.0, 0.0)
     twist_cmd.rel_standing_envs = 0.0

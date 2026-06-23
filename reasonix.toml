@@ -64,7 +64,7 @@ allow = ["Bash(cd /home/dzh/mjlab && git status --porcelain && echo \"---BRANCH-
 # graceful fallback elsewhere); "off" disables it. network allows egress.
 # workspace_root = ""            # default: current working directory
 # allow_write = ["/tmp"]          # extra dirs writers may also modify
-bash    = "enforce"
+bash    = "off"
 network = true
 
 [statusline]
