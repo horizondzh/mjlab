@@ -500,6 +500,7 @@ class step_freq_hip_pitch:
     env: ManagerBasedRlEnv,
     target_freq: float,
     std: float = 0.5,
+    window_len: float = 2.0,
     command_name: str | None = None,
     command_threshold: float = 0.1,
   ) -> torch.Tensor:
