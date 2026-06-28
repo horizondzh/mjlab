@@ -464,3 +464,82 @@ class variable_posture:
     error_squared = torch.square(current_joint_pos - desired_joint_pos)
 
     return torch.exp(-torch.mean(error_squared / (std**2), dim=1))
+
+
+class step_freq_hip_pitch:
+  """Reward for matching a target step frequency using hip pitch velocity zero-crossings.
+
+  Uses the same signal as the ``step_freq_from_hip_pitch`` metric: tracks the
+  left-right difference of hip pitch joint velocities in a sliding window and
+  counts sign changes.  Two zero-crossings = one full stride cycle per leg.
+  The reward is a Gaussian ``exp(-(freq - target_freq)^2 / std^2)``.
+
+  This approach is immune to contact flicker because it relies on joint
+  kinematics, not binary contact detection.
+  """
+
+  def __init__(self, cfg: RewardTermCfg, env: ManagerBasedRlEnv):
+    self.step_dt = env.step_dt
+    self.window_len: float = cfg.params.get("window_len", 2.0)
+    window_steps = int(self.window_len / self.step_dt)
+    self.window_steps = window_steps
+
+    robot: Entity = env.scene["robot"]
+    left_ids, _ = robot.find_joints("left_hip_pitch_joint")
+    right_ids, _ = robot.find_joints("right_hip_pitch_joint")
+    self.left_idx: int = left_ids[0]
+    self.right_idx: int = right_ids[0]
+
+    self.vel_history = torch.zeros(
+      (env.num_envs, window_steps), device=env.device, dtype=torch.float32
+    )
+    self._ptr = torch.zeros(env.num_envs, device=env.device, dtype=torch.long)
+
+  def __call__(
+    self,
+    env: ManagerBasedRlEnv,
+    target_freq: float,
+    std: float = 0.5,
+    command_name: str | None = None,
+    command_threshold: float = 0.1,
+  ) -> torch.Tensor:
+    robot: Entity = env.scene["robot"]
+    joint_vel = robot.data.joint_vel
+
+    left_vel = joint_vel[:, self.left_idx]
+    right_vel = joint_vel[:, self.right_idx]
+    diff_vel = left_vel - right_vel
+
+    B = env.num_envs
+    env_ids = torch.arange(B, device=env.device)
+    ptr = self._ptr
+    self.vel_history[env_ids, ptr] = diff_vel
+    self._ptr = (ptr + 1) % self.window_steps
+
+    offsets = (
+      torch.arange(self.window_steps, device=env.device) - self._ptr.unsqueeze(1)
+    ) % self.window_steps
+    ordered = torch.gather(self.vel_history, 1, offsets)  # [B, T]
+    sign = ordered > 0
+    crossings = (sign[:, :-1] != sign[:, 1:]).float()
+
+    cycles = crossings.sum(dim=1) / 2.0  # [B]
+    freq = cycles / self.window_len  # [B]
+
+    env.extras["log"]["Metrics/step_freq_mean"] = freq.mean()
+
+    reward = torch.exp(-((freq - target_freq) ** 2) / std**2)
+
+    if command_name is not None:
+      command = env.command_manager.get_command(command_name)
+      if command is not None:
+        linear_norm = torch.norm(command[:, :2], dim=1)
+        angular_norm = torch.abs(command[:, 2])
+        total_command = linear_norm + angular_norm
+        active = (total_command > command_threshold).float()
+        reward = reward * active
+
+    return reward
+
+  def reset(self, env_ids: torch.Tensor) -> None:
+    self.vel_history[env_ids] = 0.0

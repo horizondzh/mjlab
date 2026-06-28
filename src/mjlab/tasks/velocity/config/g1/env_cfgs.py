@@ -160,6 +160,16 @@ def unitree_g1_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     params={"sensor_name": self_collision_cfg.name, "force_threshold": 10.0},
   )
 
+  cfg.rewards["step_freq_hip_pitch"] = RewardTermCfg(
+    func=mdp.step_freq_hip_pitch,
+    weight=3.0,
+    params={
+      "target_freq": 1.0,
+      "std": 0.3,
+      "window_len": 2.0,
+    },
+  )
+
   # Apply play mode overrides.
 
   # Apply play mode overrides.
