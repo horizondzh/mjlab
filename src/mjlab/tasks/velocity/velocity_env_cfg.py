@@ -155,6 +155,13 @@ def make_velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     "mean_action_acc": MetricsTermCfg(
       func=mdp.mean_action_acc,
     ),
+    "step_freq_from_contact": MetricsTermCfg(
+      func=mdp.step_freq_from_contact,
+      params={"sensor_name": "feet_ground_contact"},
+    ),
+    "step_freq_from_hip_pitch": MetricsTermCfg(
+      func=mdp.step_freq_from_hip_pitch,
+    ),
   }
 
   ##
